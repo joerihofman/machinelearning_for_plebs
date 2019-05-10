@@ -6,7 +6,7 @@ from nl.joerihofman.machinelearningforplebs.FileLoader import FileLoader
 
 class Main:
 
-    dataset = FileLoader.get_dataset_from_file("")
+    dataset = FileLoader.get_dataset_from_file("tijdvakMetAanlever.csv")
 
     x = np.array([5, 15, 25, 35, 45, 55]).reshape((-1, 1))
     y = np.array([5, 20, 14, 32, 22, 38])
@@ -15,7 +15,7 @@ class Main:
         self.model = LinearRegression().fit(self.x, self.y)
 
     def do_something_with_dataset(self):
-        return self.dataset.iloc[:, :-1].values
+        return self.dataset.iloc[:].values
 
     def get_score(self):
         return self.model.score(self.x, self.y)
@@ -33,7 +33,3 @@ class Main:
 main = Main()
 
 print(main.do_something_with_dataset())
-
-print("INTERCEPT : " + main.get_intercept())
-print("SLOPE : " + main.get_slope())
-print("PREDICTION : " + main.get_prediction())
