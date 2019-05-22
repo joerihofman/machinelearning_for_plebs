@@ -1,16 +1,93 @@
+import datetime
+
 import matplotlib.pyplot as plt
-import numpy as np
-from sklearn import datasets, linear_model
-from sklearn import model_selection
-from sklearn.metrics import mean_squared_error, r2_score
+import pandas
+from sklearn.linear_model import LinearRegression
 
 from nl.joerihofman.machinelearningforplebs.FileLoader import FileLoader
 
-# Load the diabetes dataset
-diabetes = datasets.load_diabetes()
 
-seed = 7
-dataset = FileLoader.get_dataset_from_file("tijdvakMetAanlever.csv")
+def date_time_to_days_since_epoch(date):
+    try:
+        parsed_date = datetime.datetime.strptime(date, "%d-%m-%y %H:%M").date()
+        return (parsed_date - datetime.date(1970, 1, 1)).days
+    except ValueError:
+        return date_to_days_since_epoch(date)
+
+
+def date_to_days_since_epoch(date):
+    try:
+        parsed_date = datetime.datetime.strptime(date, "%d-%m-%y").date()
+        return (parsed_date - datetime.date(1970, 1, 1)).days
+    except TypeError:
+        raise
+
+
+def bereken_die_zooi(aanlever, tijdvak):
+    try:
+        aanl = date_time_to_days_since_epoch(aanlever)
+        tijdv = date_to_days_since_epoch(tijdvak)
+        return aanl - tijdv
+    except TypeError:
+        return 1000000000
+
+
+# date_to_days_since_epoch(row[8]) - date_time_to_days_since_epoch(row[3])
+
+class LinReg:
+    seed = 7
+
+    lm = LinearRegression()
+
+    @staticmethod
+    def maak_dataframe():
+        dataset = FileLoader.get_dataset_from_file("data_export_zonder_header.csv")
+        data_frame = pandas.DataFrame(dataset)
+        data_frame["verschil"] = data_frame.apply(lambda row: bereken_die_zooi(row[3], row[8]), axis=1)
+
+        data_frame = data_frame[data_frame.verschil != 1000000000]
+
+        data_frame["tijdvakbegin_epoch"] = data_frame.apply(lambda row: date_to_days_since_epoch(row[8]), axis=1)
+        data_frame["ontvangst_epoch"] = data_frame.apply(lambda row: date_time_to_days_since_epoch(row[3]), axis=1)
+        return data_frame
+
+    @staticmethod
+    def print_dit(data_frame):
+        for it in data_frame["verschil"]:
+            print(it)
+
+    def schatting_samenhang(self, data_frame):
+        Y = data_frame[["tijdvakbegin_epoch", "ontvangst_epoch", "psn_id_fonds"]].copy()  # .drop("verschil", axis=1).drop("id_extern", axis=1)
+        Y = Y.fillna(data_frame.mean())
+        X = data_frame[["verschil"]].copy().fillna(data_frame["verschil"].mean())
+        self.lm.fit(X, Y)
+        return pandas.DataFrame(zip(Y.columns, self.lm.coef_), columns=["features", "estimatedcoef"])
+
+    def print_scatterplot(self, data_frame):
+        plt.scatter(data_frame.tijdvakbegin_epoch, data_frame.verschil)
+        plt.ylabel("verschil in dagen")
+        plt.xlabel("tijdvak begin")
+        plt.title("titel")
+        plt.show()
+
+
+lr = LinReg()
+dataframe = lr.maak_dataframe()
+print(dataframe.shape)
+print(lr.schatting_samenhang(dataframe))
+lr.print_scatterplot(dataframe)
+
+
+
+
+
+
+
+
+
+
+
+"""
 array = dataset.values
 x = array[:, 0:16]
 y = array[:, 1]
@@ -53,3 +130,4 @@ plt.xticks(())
 plt.yticks(())
 
 plt.show()
+"""
