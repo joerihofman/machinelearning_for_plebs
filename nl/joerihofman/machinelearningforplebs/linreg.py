@@ -2,6 +2,7 @@ import datetime
 
 import matplotlib.pyplot as plt
 import pandas
+import sklearn
 from sklearn.linear_model import LinearRegression
 
 from nl.joerihofman.machinelearningforplebs.FileLoader import FileLoader
@@ -52,17 +53,36 @@ def estimate_coefficient(data_frame):
     x = data_frame[["verschil"]].copy().fillna(data_frame["verschil"].mean())
     y = data_frame[["tijdvakbegin_epoch", "ontvangst_epoch", "psn_id_fonds"]].copy()
     y = y.fillna(data_frame.mean())
-    LM.fit(x, y)
-    plt.scatter(data_frame.tijdvakbegin_epoch, LM.predict(x))
-    plt.ylabel("Verschil aanlevermoment en tijdvak (dagen)")
-    plt.xlabel("Begin tijdvak (dagen sinds epoch)")
-    plt.title("Scatterplot onderzoek")
-    plt.show()
+    make_relationship_plot(x, y, data_frame)
+    # make_residual_plot(x, y, data_frame)
     return pandas.DataFrame(zip(y.columns, LM.coef_), columns=["features", "estimatedcoef"])
 
 
-def make_prediction(data_frame):
-    x = data_frame[["verschil"]].copy().fillna(data_frame["verschil"].mean())
+def make_relationship_plot(x, y, data_frame):
+    LM.fit(x, y)
+    print(x.shape)
+    print(data_frame.tijdvakbegin_epoch.shape)
+    plt.scatter(data_frame.tijdvakbegin_epoch, LM.predict(x)[:,0])
+    plt.ylabel("Ontvangstdatum (dagen sinds epoch)")
+    plt.xlabel("Begin tijdvak (dagen sinds epoch)")
+    plt.title("Relatie tussen begin van het tijdvak en de ontvangstdatum")
+    plt.show()
+
+def make_residual_plot(x, y, data_frame):
+    x_train, x_test, y_train, y_test = make_testdata(x, data_frame)
+    LM.fit(x_train, y_train)
+    plt.scatter(LM.predict(x_train), LM.predict(x_train) - y_train, c='b', s=40, alpha=0.5)
+    plt.scatter(LM.predict(x_test), LM.predict(x_test) - y_test, c='g', s=40)
+    # plt.hlines(y=0, xmin=0, xmax=1400)
+    plt.ylabel("Residuals")
+    plt.xlabel("Begin tijdvak (dagen sinds epoch)")
+    plt.title("Residual plot met training (blauw) en test (groen) data")
+    plt.show()
+
+def make_testdata(x, data_frame):
+    return sklearn.model_selection.train_test_split(
+        x, data_frame.tijdvakbegin_epoch, test_size=0.33, random_state=5
+    )
 
 
 def print_scatterplot(data_frame):
@@ -74,7 +94,6 @@ def print_scatterplot(data_frame):
 
 
 dataframe = create_dataframe()
-make_prediction(dataframe)
 estimate_coefficient(dataframe)
 # print(estimate_coefficient(dataframe))
 # print_scatterplot(dataframe)
