@@ -39,7 +39,7 @@ def calculate_difference_in_days(aanlever, tijdvak):
 
 
 def create_dataframe():
-    dataset = FileLoader.get_dataset_from_file("data_export_zonder_header.csv")
+    dataset = FileLoader.get_dataset_from_aanlever_file("data_export_zonder_header.csv")
     data_frame = pandas.DataFrame(dataset)
     data_frame["verschil"] = data_frame.apply(lambda row: calculate_difference_in_days(row[3], row[8]), axis=1)
 

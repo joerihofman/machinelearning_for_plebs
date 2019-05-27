@@ -19,7 +19,7 @@ from nl.joerihofman.machinelearningforplebs.FileLoader import FileLoader
 
 class Main:
 
-    dataset = FileLoader.get_dataset_from_file("tijdvakMetAanlever.csv")
+    dataset = FileLoader.get_dataset_from_aanlever_file("tijdvakMetAanlever.csv")
 
     x = np.array([5, 15, 25, 35, 45, 55]).reshape((-1, 1))
     y = np.array([5, 20, 14, 32, 22, 38])
